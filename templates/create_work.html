@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}
+Создание работ
+{% endblock %}
+{% block style %}
+{% include "style.html" %}
+{% endblock %}
+{% block header %}
+{% include "header.html" %}
+{% endblock %}
+{% block body %}
+<div>
+    <a href="/works-list/?id={{id}}">Назад</a>
+</div>
+
+<br>
+<br>
+
+<div>
+    <h1> Заказ работы для категории "{{name}}"</h1>
+    <form method="post">
+        <input type="text" name="name" placeholder="Название">
+        <button type="submit">Сохранить и вернуться к списку работ</button>
+    </form>
+</div>
+
+{% endblock %}

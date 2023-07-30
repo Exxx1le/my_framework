@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}
+Список категорий работ
+{% endblock %}
+{% block style %}
+{% include "style.html" %}
+{% endblock %}
+{% block header %}
+{% include "header.html" %}
+{% endblock %}
+{% block body %}
+<a href="/">Назад</a>
+
+<h1>Список категорий работ</h1>
+<ul>
+
+    {% for item in objects_list %}
+    <li>
+        {{item.name}} <span>Количество категорий работ: {{item.works_count()}}</span>
+    </li>
+    {% endfor %}
+</ul>
+
+<div>
+    <li><a href="/works-list/">Список работ</a></li>
+    <li><a href="/create-work/">Заказать работу</a></li>
+</div>
+{% endblock %}
