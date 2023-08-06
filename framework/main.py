@@ -40,6 +40,7 @@ class MyFramework:
 
         for front in self.fronts_lst:
             front(request)
+
         code, body = view(request)
         start_response(code, [("Content-Type", "text/html")])
         return [body.encode("utf-8")]

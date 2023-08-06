@@ -1,17 +1,22 @@
-from datetime import date
-
 from framework.templator import render
 from patterns.creational_patterns import Engine, Logger
+from patterns.structural_patterns import AppRoute, Debug
+
 
 site = Engine()
 logger = Logger("main")
 
+routes = {}
 
+
+@AppRoute(routes=routes, url="/")
 class Index:
+    @Debug(name="Index")
     def __call__(self, request):
         return "200 OK", render("index.html", object_list=site.categories)
 
 
+@AppRoute(routes=routes, url="/contact/")
 class Contact:
     def __call__(self, request):
         return "200 OK", render("contact.html")
@@ -22,6 +27,7 @@ class NotFound404:
         return "404", "Page Not Found"
 
 
+@AppRoute(routes=routes, url="/works-list/")
 class WorksList:
     def __call__(self, request):
         logger.log("Список работ")
@@ -34,9 +40,10 @@ class WorksList:
                 id=category.id,
             )
         except KeyError:
-            return "200 OK", "No such works"
+            return "200 OK", "Works haven't been added yet"
 
 
+@AppRoute(routes=routes, url="/create-work/")
 class CreateWork:
     category_id = -1
 
@@ -70,9 +77,10 @@ class CreateWork:
                     "create_work.html", name=category.name, id=category.id
                 )
             except KeyError:
-                return "200 OK", "No works to create"
+                return "200 OK", "Works haven't been added yet"
 
 
+@AppRoute(routes=routes, url="/create-category/")
 class CreateCategory:
     def __call__(self, request):
         if request["method"] == "POST":
@@ -97,12 +105,14 @@ class CreateCategory:
             return "200 OK", render("create_category.html", categories=categories)
 
 
+@AppRoute(routes=routes, url="/category-list/")
 class CategoryList:
     def __call__(self, request):
         logger.log("Список категорий")
         return "200 OK", render("category_list.html", objects_list=site.categories)
 
 
+@AppRoute(routes=routes, url="/copy-work/")
 class CopyWork:
     def __call__(self, request):
         request_params = request["request_params"]
@@ -123,4 +133,4 @@ class CopyWork:
                 name=new_work.category.name,
             )
         except KeyError:
-            return "200 OK", "No such works"
+            return "200 OK", "Works haven't been added yet"
