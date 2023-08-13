@@ -5,10 +5,12 @@
 
 from copy import deepcopy
 from quopri import decodestring
+from patterns.behavior_patterns import FileWriter, WorkType
 
 
 class User:
-    pass
+    def __init__(self, name):
+        self.name = name
 
 
 # исполнитель заказа
@@ -18,7 +20,9 @@ class Contractor(User):
 
 # заказчик
 class Customer(User):
-    pass
+    def __init__(self, name):
+        self.courses = []
+        super().__init__(name)
 
 
 class UsersFactory:
@@ -35,11 +39,21 @@ class WorkPrototype:
         return deepcopy(self)
 
 
-class Work(WorkPrototype):
+class Work(WorkPrototype, WorkType):
     def __init__(self, name, category):
         self.name = name
         self.category = category
         self.category.works.append(self)
+        self.customers = []
+        super().__init__()
+
+    def __getitem__(self, item):
+        return self.works[item]
+
+    def add_customer(self, customer: Customer):
+        self.works.append(customer)
+        customer.works.append(self)
+        self.notify()
 
 
 # периодические работы (сервисы)
@@ -78,6 +92,14 @@ class Category:
         return result
 
 
+class WorkFactory:
+    types = {"service": ServiceWork, "one-time": OneTimeWork}
+
+    @classmethod
+    def create(cls, type_, name, category):
+        return cls.types[type_](name, category)
+
+
 class Engine:
     def __init__(self):
         self.contractors = []
@@ -86,8 +108,8 @@ class Engine:
         self.categories = []
 
     @staticmethod
-    def create_user(type_):
-        return UsersFactory.create(type_)
+    def create_user(type_, name):
+        return UsersFactory.create(type_, name)
 
     @staticmethod
     def create_category(name, category=None):
@@ -136,9 +158,10 @@ class SingletonByName(type):
 
 
 class Logger(metaclass=SingletonByName):
-    def __init__(self, name):
+    def __init__(self, name, writer=FileWriter()):
         self.name = name
+        self.writer = writer
 
-    @staticmethod
-    def log(text):
-        print("log--->", text)
+    def log(self, text):
+        text = f"log---> {text}"
+        self.writer.write(text)

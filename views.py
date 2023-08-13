@@ -1,10 +1,19 @@
 from framework.templator import render
 from patterns.creational_patterns import Engine, Logger
 from patterns.structural_patterns import AppRoute, Debug
+from patterns.behavior_patterns import (
+    EmailNotifier,
+    SmsNotifier,
+    ListView,
+    CreateView,
+    BaseSerializer,
+)
 
 
 site = Engine()
 logger = Logger("main")
+email_notifier = EmailNotifier()
+sms_notifier = SmsNotifier()
 
 routes = {}
 
@@ -59,6 +68,10 @@ class CreateWork:
                 category = site.find_category_by_id(int(self.category_id))
 
                 work = site.create_work("record", name, category)
+
+                work.observers.append(email_notifier)
+                work.observers.append(sms_notifier)
+
                 site.works.append(work)
 
             return "200 OK", render(
@@ -134,3 +147,47 @@ class CopyWork:
             )
         except KeyError:
             return "200 OK", "Works haven't been added yet"
+
+
+@AppRoute(routes=routes, url="/customer-list/")
+class CustomerListView(ListView):
+    queryset = site.customers
+    template_name = "customer_list.html"
+
+
+@AppRoute(routes=routes, url="/create-customer/")
+class CustomerCreateView(CreateView):
+    template_name = "create_customer.html"
+
+    def create_obj(self, data: dict):
+        name = data["name"]
+        name = site.decode_value(name)
+        new_obj = site.create_user("customer", name)
+        site.customers.append(new_obj)
+
+
+@AppRoute(routes=routes, url="/add-customer/")
+class AddCustomerByWorkCreateView(CreateView):
+    template_name = "add_customer.html"
+
+    def get_context_data(self):
+        context = super().get_context_data()
+        context["works"] = site.works
+        context["customers"] = site.customers
+        return context
+
+    def create_obj(self, data: dict):
+        work_name = data["work_name"]
+        work_name = site.decode_value(work_name)
+        work = site.get_work(work_name)
+        customer_name = data["customer_name"]
+        customer_name = site.decode_value(customer_name)
+        customer = site.get_customer(customer_name)
+        work.add_customer(customer)
+
+
+@AppRoute(routes=routes, url="/api/")
+class WorkApi:
+    @Debug(name="workApi")
+    def __call__(self, request):
+        return "200 OK", BaseSerializer(site.works).save()
