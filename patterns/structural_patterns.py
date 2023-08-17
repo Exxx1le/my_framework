@@ -22,7 +22,7 @@ class Debug:
                 te = time()
                 delta = te - ts
 
-                print(f"debug --> {self.name} выполнялся {delta:2.2f} мс")
+                print(f"debug --> {self.name} выполнялся {delta:2.2f} ms")
                 return result
 
             return timed

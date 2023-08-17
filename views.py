@@ -1,19 +1,24 @@
+from datetime import date
+
 from framework.templator import render
-from patterns.creational_patterns import Engine, Logger
+from patterns.сreational_patterns import Engine, Logger, MapperRegistry
 from patterns.structural_patterns import AppRoute, Debug
-from patterns.behavior_patterns import (
+from patterns.behavioral_patterns import (
     EmailNotifier,
     SmsNotifier,
     ListView,
     CreateView,
     BaseSerializer,
 )
-
+from patterns.architectural_system_pattern_unit_of_work import UnitOfWork
 
 site = Engine()
 logger = Logger("main")
 email_notifier = EmailNotifier()
 sms_notifier = SmsNotifier()
+UnitOfWork.new_current()
+UnitOfWork.get_current().set_mapper_registry(MapperRegistry)
+
 
 routes = {}
 
@@ -32,6 +37,7 @@ class Contact:
 
 
 class NotFound404:
+    @Debug(name="NotFound404")
     def __call__(self, request):
         return "404", "Page Not Found"
 
@@ -151,8 +157,11 @@ class CopyWork:
 
 @AppRoute(routes=routes, url="/customer-list/")
 class CustomerListView(ListView):
-    queryset = site.customers
     template_name = "customer_list.html"
+
+    def get_queryset(self):
+        mapper = MapperRegistry.get_current_mapper("customer")
+        return mapper.all()
 
 
 @AppRoute(routes=routes, url="/create-customer/")
@@ -164,6 +173,8 @@ class CustomerCreateView(CreateView):
         name = site.decode_value(name)
         new_obj = site.create_user("customer", name)
         site.customers.append(new_obj)
+        new_obj.mark_new()
+        UnitOfWork.get_current().commit()
 
 
 @AppRoute(routes=routes, url="/add-customer/")
